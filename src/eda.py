@@ -2,6 +2,7 @@ from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 from PIL import Image
+import numpy as np
 
 Path("figures").mkdir(exist_ok=True)
 df = pd.read_csv("audit.csv")
@@ -24,9 +25,11 @@ for c in classes:
 # Histograms per class
 for col, log in [("width", False), ("height", False), ("file_size", True)]:
     fig, ax = plt.subplots(figsize=(7, 4))
+    lo, hi = df[col].min(), df[col].max()
+    bins = np.logspace(np.log10(lo), np.log10(hi), 40) if log else 40
     for c in classes:
-        ax.hist(df[df["class"] == c][col], bins=40, alpha=0.6, label=c)
-    ax.set_xlabel(col + (" (bytes)" if col == "file_size" else " (px)"))
+        ax.hist(df[df["class"] == c][col], bins=bins, alpha=0.6, label=c)
+    ax.set_xlabel(col + (" (bytes, log scale)" if log else " (px)"))
     ax.set_ylabel("Number of images")
     if log:
         ax.set_xscale("log")
