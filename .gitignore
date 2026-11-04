@@ -222,7 +222,6 @@ __marimo__/
 
 .venv/
 .env
-data/raw/
 *.h5
 mlruns/
 __pycache__/
