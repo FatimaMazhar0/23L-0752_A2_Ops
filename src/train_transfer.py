@@ -12,6 +12,6 @@ fit_stage(model, "mnv2_stage1", train_ds, val_ds, epochs=25)   # best weights re
 
 # Stage 2: unfreeze last block only, much smaller learning rate
 unfreeze_last_block(model)
-model = compile_model(model, lr=1e-5)                           # recompile is required
+model = compile_model(model, lr=1e-4)                           # recompile is required
 list_trainable(model, "mnv2_stage2")
 fit_stage(model, "mnv2_stage2", train_ds, val_ds, epochs=20)
