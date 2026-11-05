@@ -1,0 +1,11 @@
+path,label,prob_ai,pred,conf
+data/raw/AiArtData/Midjourney-River.jpg,1,0.028298879,0,0.971701121
+data/raw/AiArtData/Nov20_17_498430921.jpg,1,0.034407258,0,0.965592742
+data/raw/AiArtData/Boris-Eldagsen-AI-art.jpg,1,0.06786655,0,0.93213345
+data/raw/AiArtData/Screen_Shot_2023-01-22_at_5.33.01_PM.png,1,0.068299346,0,0.931700654
+data/raw/AiArtData/240201-airec-main-ksp-5625e8.jpg,1,0.076766364,0,0.923233636
+data/raw/RealArt/02-still-for-america-room-loop-superJumbo.jpg,0,0.91456294,1,0.91456294
+data/raw/RealArt/hqdefault.jpg,0,0.89269435,1,0.89269435
+data/raw/RealArt/3-self-portraits-by-zanele-muholi.jpg,0,0.840847,1,0.840847
+data/raw/RealArt/forest-landscape_71767-127.jpg,0,0.8368529,1,0.8368529
+data/raw/RealArt/hero-animals-02.jpg,0,0.8188457,1,0.8188457
