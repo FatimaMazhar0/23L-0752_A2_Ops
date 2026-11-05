@@ -225,3 +225,4 @@ __marimo__/
 *.h5
 mlruns/
 __pycache__/models/
+tuner/
