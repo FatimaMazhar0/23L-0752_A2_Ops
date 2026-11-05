@@ -224,4 +224,4 @@ __marimo__/
 .env
 *.h5
 mlruns/
-__pycache__/
+__pycache__/models/

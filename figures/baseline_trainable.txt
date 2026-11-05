@@ -1,0 +1,10 @@
+conv1
+bn1
+conv2
+bn2
+conv3
+bn3
+conv4
+bn4
+prob_ai
+Trainable params: 389,153 of 390,113
