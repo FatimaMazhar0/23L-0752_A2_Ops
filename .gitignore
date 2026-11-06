@@ -233,3 +233,7 @@ mlartifacts/
 tuner/
 models/
 figures/mlflow_*_compare_*
+
+.vscode/
+instance/
+test_files/

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Result &middot; VisionGuard{% endblock %}
+{% block content %}
+<h1>Result</h1>
+<div class="card result">
+  {% if preview %}<img class="preview" src="{{ preview }}" alt="Preview of the uploaded image">{% endif %}
+  <div>
+    <p class="verdict {{ 'ai' if r.label == 'AI' else 'real' }}">
+      {{ 'Likely AI-generated' if r.label == 'AI' else 'Likely real (not AI-generated)' }}
+    </p>
+    <p>Confidence: <strong>{{ '%.1f' % (r.confidence * 100) }}%</strong></p>
+    <div class="bar"><span style="width: {{ '%.1f' % (r.confidence * 100) }}%"></span></div>
+    <dl>
+      <dt>File</dt><dd>{{ filename }}</dd>
+      <dt>p(AI)</dt><dd>{{ '%.3f' % r.p_ai }} (decision threshold {{ '%.2f' % r.threshold }})</dd>
+      <dt>Model</dt><dd>{{ model_name }}, version {{ model_version }}</dd>
+    </dl>
+  </div>
+</div>
+<p class="caveat"><strong>Please note:</strong> {{ caveat }}</p>
+<p><a class="button" href="{{ url_for('index') }}">Check another image</a>
+   &nbsp; <a href="{{ url_for('history') }}">See history</a></p>
+{% endblock %}

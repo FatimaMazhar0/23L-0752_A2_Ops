@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Is this image real or AI-generated?</h1>
+<p class="muted">Upload a PNG, JPG or WEBP image (up to {{ max_mb }} MB). It is analysed in memory and is not stored.</p>
+<form class="card" action="{{ url_for('predict') }}" method="post" enctype="multipart/form-data">
+  <input type="file" name="image" accept="image/png,image/jpeg,image/webp" required>
+  <button type="submit">Analyse</button>
+</form>
+{% endblock %}

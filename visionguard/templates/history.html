@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}History &middot; VisionGuard{% endblock %}
+{% block content %}
+<h1>History</h1>
+<p class="muted">{{ total }} checks recorded; showing the latest {{ rows|length }}. Times are UTC.</p>
+{% if rows %}
+<div class="table-wrap">
+<table>
+  <thead><tr>
+    <th>#</th><th>When (UTC)</th><th>File</th><th>Decision</th>
+    <th>Confidence</th><th>p(AI)</th><th>Threshold</th><th>Model</th>
+  </tr></thead>
+  <tbody>
+  {% for p in rows %}
+    <tr>
+      <td>{{ p.id }}</td>
+      <td>{{ p.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+      <td>{{ p.filename }}</td>
+      <td><span class="tag {{ 'ai' if p.label == 'AI' else 'real' }}">{{ p.label }}</span></td>
+      <td>{{ '%.1f' % (p.confidence * 100) }}%</td>
+      <td>{{ '%.3f' % p.p_ai }}</td>
+      <td>{{ '%.2f' % p.threshold }}</td>
+      <td>{{ p.model_name }} v{{ p.model_version }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p>No checks yet. <a href="{{ url_for('index') }}">Upload an image</a> to create the first record.</p>
+{% endif %}
+{% endblock %}
