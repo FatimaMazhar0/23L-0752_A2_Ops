@@ -1,4 +1,11 @@
+"""Task 3.3 / 3.4: train a VisionGuard configuration with MLflow tracking.
+
+  python src/train_mlflow.py manual  D_lr2_1e-4    # Keras callback logs everything by hand
+  python src/train_mlflow.py autolog D_lr2_1e-4    # MLflow TensorFlow autologging
+  python src/train_mlflow.py compare A_ref C_aug_flip ...   # Task 3.5: validation metrics only
+"""
 import sys
+import time
 from contextlib import nullcontext
 
 import mlflow
@@ -11,6 +18,15 @@ from models import build_transfer, compile_model, unfreeze_last_block
 from train_utils import fit_stage, list_trainable, set_seed
 
 BATCH_SIZE = 32
+
+CHANGES = {                                   # what each run changes, and relative to which run
+    "A_ref": "reference, no change",
+    "B_size224": "image size 160 to 224 (vs A_ref)",
+    "C_aug_flip": "flip-only augmentation (vs A_ref)",
+    "D_lr2_1e-4": "stage-2 learning rate 1e-5 to 1e-4 (vs A_ref)",
+    "E_unfreeze_14": "unfreeze from block_14 instead of block_16 (vs D_lr2_1e-4)",
+    "F_effnetb0": "backbone MobileNetV2 to EfficientNetB0 (vs A_ref)",
+}
 
 
 def train(cfg, tag, stage_run=None, callbacks=None):
@@ -50,18 +66,23 @@ def final_val_metrics(h2, b2):
             "val_recall": h2["val_recall"][i]}
 
 
-def run_manual(name):
+def run_manual(name, task="3.3", with_test=True):
+    """Manual logging with a Keras callback. task 3.5 runs skip the test set entirely."""
     cfg = {**DEFAULTS, **EXPERIMENTS[name]}
-    tag = f"mlflow_{name}_manual"
-    with mlflow.start_run(run_name=f"{name}_manual"):
-        mlflow.set_tags(tracking.run_tags({"approach": "manual-callback", "task": "3.3",
-                                           "config": name}))
+    kind = "manual" if task == "3.3" else "compare"
+    tag = f"mlflow_{name}_{kind}"
+    t0 = time.time()
+    with mlflow.start_run(run_name=f"{name}_{kind}"):
+        mlflow.set_tags(tracking.run_tags({"approach": "manual-callback", "task": task,
+                                           "config": name, "change": CHANGES[name]}))
         mlflow.log_params(config_params(cfg))
         model, (h1, b1), (h2, b2) = train(
             cfg, tag, callbacks={"s1": [tracking.MlflowLogger("s1_")],
                                  "s2": [tracking.MlflowLogger("s2_")]})
-        mlflow.log_metrics({"best_epoch_stage1": b1, **final_val_metrics(h2, b2)})
-        tracking.log_test_results(model, cfg["img_size"])
+        mlflow.log_metrics({"best_epoch_stage1": b1, **final_val_metrics(h2, b2),
+                            "train_minutes": (time.time() - t0) / 60})
+        if with_test:
+            tracking.log_test_results(model, cfg["img_size"])
         tracking.log_artifacts(model, tag)
 
 
@@ -93,7 +114,14 @@ def run_autolog(name):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3 or sys.argv[1] not in ("manual", "autolog") or sys.argv[2] not in EXPERIMENTS:
-        sys.exit(f"usage: python src/train_mlflow.py [manual|autolog] [{'|'.join(EXPERIMENTS)}]")
+    modes = ("manual", "autolog", "compare")
+    if len(sys.argv) < 3 or sys.argv[1] not in modes or any(n not in EXPERIMENTS for n in sys.argv[2:]):
+        sys.exit(f"usage: python src/train_mlflow.py [{'|'.join(modes)}] [{'|'.join(EXPERIMENTS)}]")
     tracking.setup()
-    {"manual": run_manual, "autolog": run_autolog}[sys.argv[1]](sys.argv[2])
+    if sys.argv[1] == "compare":
+        for n in sys.argv[2:]:
+            run_manual(n, task="3.5", with_test=False)
+    elif len(sys.argv) == 3:
+        {"manual": run_manual, "autolog": run_autolog}[sys.argv[1]](sys.argv[2])
+    else:
+        sys.exit("manual and autolog take exactly one configuration name")
