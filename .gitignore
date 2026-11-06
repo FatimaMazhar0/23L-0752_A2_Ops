@@ -232,3 +232,4 @@ mlruns/
 mlartifacts/
 tuner/
 models/
+figures/mlflow_*_compare_*

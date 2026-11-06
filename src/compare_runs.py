@@ -3,7 +3,7 @@ import mlflow
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import tracking
+import tracking_mlflow as tracking
 from train_mlflow import CHANGES
 
 tracking.setup()
