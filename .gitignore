@@ -226,3 +226,9 @@ __marimo__/
 mlruns/
 __pycache__/models/
 tuner/
+.env
+mlflow_toy.db
+mlruns/
+mlartifacts/
+tuner/
+models/

@@ -55,9 +55,9 @@ def plot_curves(h, best, tag):
     plt.close(fig)
 
 
-def fit_stage(model, tag, train_ds, val_ds, epochs):
+def fit_stage(model, tag, train_ds, val_ds, epochs, extra_callbacks=()):
     hist = model.fit(train_ds, validation_data=val_ds, epochs=epochs,
-                     callbacks=get_callbacks(tag), verbose=2)
+                     callbacks=get_callbacks(tag) + list(extra_callbacks), verbose=2)    
     h = hist.history
     best = int(np.argmin(h["val_loss"])) + 1
     json.dump({"history": h, "best_epoch": best},
