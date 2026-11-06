@@ -231,7 +231,8 @@ mlflow_toy.db
 mlruns/
 mlartifacts/
 tuner/
-models/
+models/*
+!models/champion.keras
 figures/mlflow_*_compare_*
 
 .vscode/

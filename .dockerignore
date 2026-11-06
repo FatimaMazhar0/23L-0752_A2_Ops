@@ -1,0 +1,36 @@
+# secrets and local config
+.env
+.env.*
+!.env.example
+
+# environments, VCS, DVC
+.venv
+.git
+.gitignore
+.dvc
+.dvcignore
+
+# only champion.keras goes into the image
+models/*
+!models/champion.keras
+
+# training / experiment material not needed at run time
+data
+splits
+src
+notebooks
+tuner
+mlruns
+mlflow_toy.db
+audit.csv
+figures
+screenshots
+test_files
+app
+instance
+README.md
+
+# caches
+__pycache__
+*.pyc
+.vscode

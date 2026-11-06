@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-visionguard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-visionguard}
+    volumes:
+      - pgdata:/var/lib/postgresql/data      # named volume: data survives container removal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    # No "ports:" here on purpose: the database is reachable only from other
+    # services on the Compose network (as db:5432), not from my computer.
+
+  web:
+    build: .
+    image: visionguard:v1
+    environment:
+      # The web app reaches the database by its service name "db"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-visionguard}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-visionguard}
+      THRESHOLD: ${THRESHOLD:-0.46}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-5}
+    ports:
+      - "8000:8000"                          # only the web app is published
+    depends_on:
+      db:
+        condition: service_healthy           # start web only after Postgres accepts connections
+    restart: unless-stopped
+
+volumes:
+  pgdata:
