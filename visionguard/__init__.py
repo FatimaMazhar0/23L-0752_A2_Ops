@@ -86,12 +86,17 @@ def create_app():
         except inference.ImageDecodeError:
             raise UploadError("That image could not be decoded for analysis.", 422,
                               "Image could not be decoded")
-        db.add_prediction(filename=name, sha256=hashlib.sha256(data).hexdigest(), size_bytes=len(data),
-                          model_name=config.MODEL_NAME, model_version=config.MODEL_VERSION, **r)
+        saved = True
+        try:
+            db.add_prediction(filename=name, sha256=hashlib.sha256(data).hexdigest(), size_bytes=len(data),
+                              model_name=config.MODEL_NAME, model_version=config.MODEL_VERSION, **r)
+        except Exception:
+            app.logger.exception("Could not save the prediction to the database")
+            saved = False
         return render_template("result.html", r=r, filename=name, preview=_preview(data),
                                caveat=CAVEAT, model_name=config.MODEL_NAME,
-                               model_version=config.MODEL_VERSION)
-
+                               model_version=config.MODEL_VERSION, saved=saved)
+        
     @app.get("/history")
     def history():
         rows, total = db.recent(100)

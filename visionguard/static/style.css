@@ -31,3 +31,6 @@ th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white
 th{color:var(--muted);font-weight:600}
 .error h1{margin-top:0}
 footer{text-align:center;color:var(--muted);padding:24px;font-size:.85rem}
+.table-wrap table { font-size: 0.9rem; }
+.table-wrap th, .table-wrap td { padding: 8px 10px; white-space: nowrap; }
+.file-cell { max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
