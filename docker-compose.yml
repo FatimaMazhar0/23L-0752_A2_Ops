@@ -21,7 +21,7 @@ services:
     image: visionguard:v1
     environment:
       # The web app reaches the database by its service name "db"
-      DATABASE_URL: postgresql://${POSTGRES_USER:-visionguard}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-visionguard}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-visionguard}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-visionguard}
       THRESHOLD: ${THRESHOLD:-0.46}
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-5}
     ports:
