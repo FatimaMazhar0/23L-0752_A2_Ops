@@ -1,3 +1,4 @@
+
 import base64
 import hashlib
 import io
@@ -7,7 +8,7 @@ from flask import Flask, jsonify, render_template, request
 from PIL import Image, UnidentifiedImageError
 from werkzeug.utils import secure_filename
 
-from . import config, db
+from . import config, db, remote
 
 ALLOWED_EXT = {"png", "jpg", "jpeg", "webp"}
 ALLOWED_FORMATS = {"PNG", "JPEG", "WEBP"}
@@ -65,16 +66,21 @@ def _preview(data):
 
 
 def create_app():
-    from . import inference                      # imported here so `python -m visionguard.inference` stays clean
+    from . import inference  # imported here so `python -m visionguard.inference` stays clean
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     app = Flask(__name__)
     app.config["MAX_CONTENT_LENGTH"] = int(config.MAX_UPLOAD_MB * 1024 * 1024)
     db.init(config.DATABASE_URL)
-    inference.load_model()                       # loaded once, at start-up
+
+    if config.MODEL_BACKEND == "remote":
+        app.logger.info("Using remote model API at %s", config.MODEL_API_URL)
+    else:
+        inference.load_model()
+        app.logger.info("Model loaded from %s | threshold %.2f", config.MODEL_PATH, config.THRESHOLD)
+
     from .api import bp as api_bp
     app.register_blueprint(api_bp)
-    app.logger.info("Model loaded from %s | threshold %.2f", config.MODEL_PATH, config.THRESHOLD)
 
     @app.get("/")
     def index():
@@ -83,22 +89,50 @@ def create_app():
     @app.post("/predict")
     def predict():
         name, data = _validate(request.files.get("image"))
-        try:
-            r = inference.predict(data)
-        except inference.ImageDecodeError:
-            raise UploadError("That image could not be decoded for analysis.", 422,
-                              "Image could not be decoded")
+
+        if config.MODEL_BACKEND == "remote":
+            try:
+                r, meta = remote.predict(data, name)
+            except remote.RemoteError as e:
+                raise UploadError(str(e), e.status, e.title)
+
+            model_name = f"{meta['model_name']} (remote API)"
+            model_version = meta["model_version"]
+
+        else:
+            try:
+                r = inference.predict(data)
+            except inference.ImageDecodeError:
+                raise UploadError("That image could not be decoded for analysis.", 422,
+                                  "Image could not be decoded")
+
+            model_name, model_version = config.MODEL_NAME, config.MODEL_VERSION
+
         saved = True
         try:
-            db.add_prediction(filename=name, sha256=hashlib.sha256(data).hexdigest(), size_bytes=len(data),
-                              model_name=config.MODEL_NAME, model_version=config.MODEL_VERSION, **r)
+            db.add_prediction(
+                filename=name,
+                sha256=hashlib.sha256(data).hexdigest(),
+                size_bytes=len(data),
+                model_name=model_name,
+                model_version=model_version,
+                **r
+            )
         except Exception:
             app.logger.exception("Could not save the prediction to the database")
             saved = False
-        return render_template("result.html", r=r, filename=name, preview=_preview(data),
-                               caveat=CAVEAT, model_name=config.MODEL_NAME,
-                               model_version=config.MODEL_VERSION, saved=saved)
-        
+
+        return render_template(
+            "result.html",
+            r=r,
+            filename=name,
+            preview=_preview(data),
+            caveat=CAVEAT,
+            model_name=model_name,
+            model_version=model_version,
+            saved=saved
+        )
+
     @app.get("/history")
     def history():
         rows, total = db.recent(100)
@@ -106,16 +140,27 @@ def create_app():
 
     @app.get("/health")
     def health():
-        status = {"status": "ok", "model_loaded": inference.model_loaded(), "database": "ok",
-                  "model": config.MODEL_NAME, "model_version": config.MODEL_VERSION,
-                  "threshold": config.THRESHOLD, "debug": app.debug}
+        status = {
+            "status": "ok",
+            "model_loaded": inference.model_loaded() or config.MODEL_BACKEND == "remote",
+            "backend": config.MODEL_BACKEND,
+            "database": "ok",
+            "model": config.MODEL_NAME,
+            "model_version": config.MODEL_VERSION,
+            "threshold": config.THRESHOLD,
+            "debug": app.debug
+        }
+
         try:
             db.ping()
         except Exception:
             status["database"] = "unreachable"
+
         ok = status["model_loaded"] and status["database"] == "ok"
+
         if not ok:
             status["status"] = "degraded"
+
         return jsonify(status), (200 if ok else 503)
 
     def _error(code, title, message):
