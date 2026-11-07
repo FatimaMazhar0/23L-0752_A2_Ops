@@ -72,6 +72,8 @@ def create_app():
     app.config["MAX_CONTENT_LENGTH"] = int(config.MAX_UPLOAD_MB * 1024 * 1024)
     db.init(config.DATABASE_URL)
     inference.load_model()                       # loaded once, at start-up
+    from .api import bp as api_bp
+    app.register_blueprint(api_bp)
     app.logger.info("Model loaded from %s | threshold %.2f", config.MODEL_PATH, config.THRESHOLD)
 
     @app.get("/")
