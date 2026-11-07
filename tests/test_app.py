@@ -12,7 +12,7 @@ def _png_bytes():
 def test_health_reports_model_and_database(client):
     r = client.get("/health")
     body = r.get_json()
-    assert r.status_code == 200
+    assert r.status_code == 201
     assert body["status"] == "ok"
     assert body["model_loaded"] is True
     assert body["database"] == "ok"
