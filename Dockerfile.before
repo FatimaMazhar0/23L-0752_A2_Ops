@@ -1,0 +1,26 @@
+# "Before" build for 6.4: identical to the real Dockerfile except that it installs
+# the full "tensorflow" package (requirements-before.txt) instead of "tensorflow-cpu".
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    TF_CPP_MIN_LOG_LEVEL=2
+
+WORKDIR /app
+RUN useradd --create-home --uid 1000 appuser
+
+COPY requirements-before.txt .
+RUN pip install --no-cache-dir -r requirements-before.txt
+
+COPY visionguard/ visionguard/
+COPY models/champion.keras models/champion.keras
+
+RUN mkdir -p instance && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+
+CMD ["waitress-serve", "--listen=0.0.0.0:8000", "--call", "visionguard:create_app"]
